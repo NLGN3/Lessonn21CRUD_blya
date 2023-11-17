@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit</title>
+</head>
+<body>
+
+<!--th:object для формы берется из модели. th:method определяет, какой запрос отправится в контроллер-->
+<!--помним что на самом деле все методы кроме GET и POST в html-странице будут спрятаны в скрытом методе с именем(?) "_method"-->
+<form th:method="PATCH" th:action="@{/people/{id}(id=${person.getId()})}" th:object="${person}">
+    <label for="name">Enter name:</label>
+    <input type="text" th:field="*{name}" id="name"/>
+    <br>
+    <label for="age">Enter age:</label>
+    <input type="text" th:field="*{age}" id="age"/>
+    <br>
+    <label for="email">Enter email:</label>
+    <input type="text" th:field="*{email}" id="email"/>
+    <br>
+
+    <input type="submit" value="Update!"/>
+</form>
+
+</body>
+</html>
