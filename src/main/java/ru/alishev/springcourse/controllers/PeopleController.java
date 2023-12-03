@@ -1,24 +1,29 @@
 package ru.alishev.springcourse.controllers;
 
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.alishev.springcourse.dao.PersonDAO;
 import ru.alishev.springcourse.models.Person;
+
+import java.sql.SQLException;
 
 @Controller
 @RequestMapping("/people")
 public class PeopleController {
     //хотел передавать @Autowired непосредственно в атрибут, но СР порекомендовала так, @Autowired ниже можно даже удалить (хз почему так?)
+//    @Autowired
     private final PersonDAO personDAO;
 
-//    @Autowired
     public PeopleController(PersonDAO personDAO) {
         this.personDAO = personDAO;
     }
 
     @GetMapping()
-    public String index(Model model) {
+    public String index(Model model) throws SQLException {
 //        //Получим всех людей из DAO и передадим на отображение в представление
         model.addAttribute("people", personDAO.index());
         return "people/index";
@@ -26,7 +31,7 @@ public class PeopleController {
     }
 
     @GetMapping("/{id}")
-    public String show(@PathVariable("id") int id, Model model) {
+    public String show(@PathVariable("id") int id, Model model) throws SQLException {
         System.out.println(id);
 
         //Получим одного человека по id из DAO и передадим на отображение в представление
@@ -45,28 +50,37 @@ public class PeopleController {
 
     @PostMapping()
     //@ModelAttribute("person") автоматически получает из html-формы таймлифа объект person со всеми его заполненными атрибутами и кладет их наш объект Person person
-    public String create(@ModelAttribute("person") Person person){
+    //Он так же кладет этот объект обратно в модель
+    //@Valid проверяет атрибуты класса на указанную в них валидность, и если есть ошибки кладет их в объект BindingResult
+    //Важно, чтобы этот объект шел в аргументах непосредственно за объектом с валидацией
+    public String create(@ModelAttribute("person") @Valid Person person,
+                         BindingResult bindingResult) throws SQLException {
+        if (bindingResult.hasErrors())
+            return "people/new";
         personDAO.save(person);
         //redirect: перенаправляет нас на страницу people (именно по get-запросу, видимо?)
         return "redirect:/people";
     }
 
     @GetMapping("/{id}/edit")
-    public String edit(Model model, @PathVariable("id") int id) {
+    public String edit(Model model, @PathVariable("id") int id) throws SQLException {
         model.addAttribute("person", personDAO.show(id));
         return "people/edit";
     }
 
     @PatchMapping("/{id}")
 //    @RequestMapping(method = RequestMethod.PATCH, value="/{id}")
-    public String update(@ModelAttribute("person") Person person, @PathVariable("id") int id) {
+    public String update(@ModelAttribute("person") @Valid Person person, BindingResult bindingResult,
+                         @PathVariable("id") int id) throws SQLException {
+        if (bindingResult.hasErrors())
+            return "people/edit";
         personDAO.update(id, person);
 //        return "redirect:/people";
         return "redirect:/people/" + id;  //new
     }
 
     @DeleteMapping("/{id}/delete")
-    public String delete(@PathVariable("id") int id) {
+    public String delete(@PathVariable("id") int id) throws SQLException {
         personDAO.delete(id);
         return "redirect:/people";
     }
