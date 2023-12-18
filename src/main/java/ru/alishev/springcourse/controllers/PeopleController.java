@@ -8,6 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import ru.alishev.springcourse.dao.PersonDAO;
 import ru.alishev.springcourse.models.Person;
+import ru.alishev.springcourse.util.PersonValidator;
 
 import java.sql.SQLException;
 
@@ -18,8 +19,12 @@ public class PeopleController {
 //    @Autowired
     private final PersonDAO personDAO;
 
-    public PeopleController(PersonDAO personDAO) {
+    private final PersonValidator personValidator;
+
+    @Autowired
+    public PeopleController(PersonDAO personDAO, PersonValidator personValidator) {
         this.personDAO = personDAO;
+        this.personValidator = personValidator;
     }
 
     @GetMapping()
@@ -55,6 +60,9 @@ public class PeopleController {
     //Важно, чтобы этот объект шел в аргументах непосредственно за объектом с валидацией
     public String create(@ModelAttribute("person") @Valid Person person,
                          BindingResult bindingResult) throws SQLException {
+        //после проверки валидацией непосредственно на странице, проверяем по БД
+        personValidator.validate(person, bindingResult);
+
         if (bindingResult.hasErrors())
             return "people/new";
         personDAO.save(person);
@@ -72,8 +80,11 @@ public class PeopleController {
 //    @RequestMapping(method = RequestMethod.PATCH, value="/{id}")
     public String update(@ModelAttribute("person") @Valid Person person, BindingResult bindingResult,
                          @PathVariable("id") int id) throws SQLException {
+        personValidator.validate(person, bindingResult);
+
         if (bindingResult.hasErrors())
             return "people/edit";
+        System.out.println(person.getAge());
         personDAO.update(id, person);
 //        return "redirect:/people";
         return "redirect:/people/" + id;  //new

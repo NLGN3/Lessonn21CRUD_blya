@@ -10,6 +10,7 @@ import ru.alishev.springcourse.models.Person;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class PersonDAO {
@@ -30,12 +31,19 @@ public class PersonDAO {
                 .stream().findAny().orElse(null);
     }
 
+    //Оptional - обертка для объектов, которые могут существовать, а могут и не существовать
+    //findAny() - Тоже возвращает optional
+    public Optional<Person> show(String email) {
+        return jdbcTemplate.query("SELECT * FROM person WHERE email = ?", new Object[]{email}, new BeanPropertyRowMapper<>(Person.class) )
+                .stream().findAny();
+    }
+
     public void save(Person person) throws SQLException {
-        jdbcTemplate.update("INSERT INTO person(name, age, email) VALUES (?, ?, ?)", person.getName(), person.getAge(), person.getEmail());
+        jdbcTemplate.update("INSERT INTO person(name, age, email, address) VALUES (?, ?, ?, ?)", person.getName(), person.getAge(), person.getEmail(), person.getAddress());
     }
 
     public void update(int id, Person updatedPerson) throws SQLException {
-        jdbcTemplate.update("UPDATE person SET name = ?, age = ?, email = ? WHERE id = ?", updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), id);
+        jdbcTemplate.update("UPDATE person SET name = ?, age = ?, email = ?, address = ? WHERE id = ?", updatedPerson.getName(), updatedPerson.getAge(), updatedPerson.getEmail(), updatedPerson.getAddress(), id);
     }
 
     public void delete(int id) throws SQLException {
@@ -88,7 +96,7 @@ public class PersonDAO {
         List<Person> people = new ArrayList<>();
 
         for(int i = 0; i < 1000; i++) {
-            people.add(new Person(i, "Name" + i, 30, "name"+i+"@mail.ru"));
+            people.add(new Person(i, "Name" + i, 30, "name"+i+"@mail.ru", "address"));
         }
         return people;
     }
